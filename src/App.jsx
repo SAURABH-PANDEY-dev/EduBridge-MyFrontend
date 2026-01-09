@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Signup from './pages/Signup';
@@ -15,14 +16,26 @@ const Home = () => (
 );
 
 function App() {
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
   return (
     <Router>
       <div className="min-h-screen bg-gray-50 dark:bg-[#1e1e1e] transition-colors duration-300">
-        <Navbar />
+    
+        <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+        
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
+      
+          <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
         </Routes>
       </div>
     </Router>

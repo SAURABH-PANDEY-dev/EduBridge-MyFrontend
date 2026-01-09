@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const Login = () => {
+const Login = ({ setIsLoggedIn }) => {
 	const navigate = useNavigate();
 	const [formData, setFormData] = useState({
 		email: '',
@@ -32,8 +32,8 @@ const Login = () => {
 			console.log("Login Response:", response.data);
 			const token = response.data.token || response.data;
 
-			localStorage.setItem("token", token); // Token browser mein save
-
+			localStorage.setItem("token", token); 
+			setIsLoggedIn(true);
 			alert("Login Successful!");
 			navigate('/');
 

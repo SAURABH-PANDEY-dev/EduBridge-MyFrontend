@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-const Navbar = () => {
+const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {	
 	const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 
 	
@@ -19,6 +19,13 @@ const Navbar = () => {
 	// 3. Toggle Function
 	const toggleTheme = () => {
 		setTheme(theme === "light" ? "dark" : "light");
+	};
+
+	const navigate = useNavigate();
+	const handleLogout = () => {
+		localStorage.removeItem("token"); 
+		setIsLoggedIn(false); // State update
+		navigate("/");
 	};
 
 	return (
@@ -60,12 +67,26 @@ const Navbar = () => {
 						</button>
 
 						{/* Login/Signup Buttons */}
-						<Link to="/login" className="text-gray-700 dark:text-chai-text hover:text-blue-600 dark:hover:text-chai-blue font-medium hidden sm:block">
-							Login
-						</Link>
-							<Link to="/signup" className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition duration-300 shadow-sm">
-								Sign Up
-							</Link>
+						{/* Conditional Rendering: Login vs Logout */}
+						{!isLoggedIn ? (
+						
+							<>
+								<Link to="/login" className="text-gray-700 dark:text-chai-text hover:text-blue-600 dark:hover:text-chai-blue font-medium hidden sm:block mr-4">
+									Login
+								</Link>
+								<Link to="/signup" className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition duration-300 shadow-sm">
+									Sign Up
+								</Link>
+							</>
+						) : (
+							
+							<button
+								onClick={handleLogout}
+								className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-300 shadow-sm"
+							>
+								Logout
+							</button>
+						)}
 					</div>
 				</div>
 			</div>
