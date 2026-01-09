@@ -2,7 +2,6 @@ import React from 'react';
 
 const Hero = () => {
 	return (
-		// dark:bg-chai-bg = Jab dark mode ho, tab background chai-bg (black/grey) ho jaye
 		<div className="bg-blue-600 dark:bg-chai-bg py-20 transition-colors duration-300">
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
 
