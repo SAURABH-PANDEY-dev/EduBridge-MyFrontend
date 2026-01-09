@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { jwtDecode } from "jwt-decode";
 
 const Login = ({ setIsLoggedIn }) => {
 	const navigate = useNavigate();
@@ -32,10 +33,16 @@ const Login = ({ setIsLoggedIn }) => {
 			console.log("Login Response:", response.data);
 			const token = response.data.token || response.data;
 
-			localStorage.setItem("token", token); 
+			localStorage.setItem("token", token);
+			const decoded = jwtDecode(token);
+			console.log("Decoded Token Data:", decoded); 
 			setIsLoggedIn(true);
 			alert("Login Successful!");
-			navigate('/');
+			if (decoded.role === "ADMIN" || decoded.authorities === "ADMIN") {
+				navigate('/admin');
+			} else {
+				navigate('/student-dashboard');
+			}
 
 		} catch (err) {
 			console.error(err);

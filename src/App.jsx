@@ -4,6 +4,8 @@ import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Signup from './pages/Signup';
 import Login from './pages/Login';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import StudentDashboard from './pages/student/StudentDashboard';
 
 // Home Component (Navbar + Hero)
 const Home = () => (
@@ -36,6 +38,8 @@ function App() {
           <Route path="/signup" element={<Signup />} />
       
           <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/student-dashboard" element={<StudentDashboard />} />
         </Routes>
       </div>
     </Router>
