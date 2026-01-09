@@ -60,9 +60,9 @@ const Navbar = () => {
 						</button>
 
 						{/* Login/Signup Buttons */}
-						<button className="text-gray-700 dark:text-chai-text hover:text-blue-600 dark:hover:text-chai-blue font-medium hidden sm:block">
+						<Link to="/login" className="text-gray-700 dark:text-chai-text hover:text-blue-600 dark:hover:text-chai-blue font-medium hidden sm:block">
 							Login
-						</button>
+						</Link>
 							<Link to="/signup" className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition duration-300 shadow-sm">
 								Sign Up
 							</Link>
