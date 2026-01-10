@@ -16,6 +16,8 @@ const AdminDashboard = () => {
 	const [users, setUsers] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
+	const [topContributors, setTopContributors] = useState([]);
+	const [trendingMaterials, setTrendingMaterials] = useState([]);
 
 	// --- API Header Helper ---
 	const getAuthHeader = () => {
@@ -46,6 +48,13 @@ const AdminDashboard = () => {
 			// console.log("Users Data from Backend:", usersRes.data);
 			setUsers(usersRes.data);
 
+			// 3. Fetch Top Contributors
+			const contributorsRes = await axios.get('http://localhost:8080/api/admin/stats/top-contributors', getAuthHeader());
+			setTopContributors(contributorsRes.data);
+
+			// 4. Fetch Trending Materials
+			const trendingRes = await axios.get('http://localhost:8080/api/admin/stats/trending-materials', getAuthHeader());
+			setTrendingMaterials(trendingRes.data);
 			setLoading(false);
 		} catch (err) {
 			console.error("Error fetching data:", err);
@@ -103,6 +112,56 @@ const AdminDashboard = () => {
 						<StatCard title="Pending Requests" count={stats.pendingMaterials} color="bg-yellow-500 dark:bg-yellow-600" />
 						<StatCard title="Total Posts" count={stats.totalPosts} color="bg-purple-600 dark:bg-purple-700" />
 					</div>
+
+						{/* Analytics Section: Top Contributors & Trending Materials */}
+						<div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+
+							{/* Top Contributors Card */}
+							<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg p-6">
+								<h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">🏆 Top Contributors</h3>
+								<ul className="space-y-4">
+									{topContributors.length > 0 ? (
+										topContributors.map((user, index) => (
+											<li key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-[#333333] rounded-lg">
+												<div className="flex items-center">
+													<span className="text-lg font-bold text-yellow-500 mr-3">#{index + 1}</span>
+													<span className="text-gray-700 dark:text-gray-200 font-medium">{user.name}</span>
+												</div>
+												<span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded dark:bg-blue-200 dark:text-blue-800">
+													{user.uploadCount} Uploads
+												</span>
+											</li>
+										))
+									) : (
+										<p className="text-gray-500 text-sm">No contributors yet.</p>
+									)}
+								</ul>
+							</div>
+
+							{/* Trending Materials Card */}
+							<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg p-6">
+								<h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">🔥 Trending Materials</h3>
+								<ul className="space-y-4">
+									{trendingMaterials.length > 0 ? (
+										trendingMaterials.map((material, index) => (
+											<li key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-[#333333] rounded-lg">
+												<div>
+													<p className="text-gray-700 dark:text-gray-200 font-medium">{material.title}</p>
+													<p className="text-xs text-gray-500 dark:text-gray-400">{material.subject}</p>
+												</div>
+												<div className="flex items-center text-green-600 dark:text-green-400">
+													<span className="font-bold text-lg mr-1">{material.downloadCount}</span>
+													<span className="text-xs">Downloads</span>
+												</div>
+											</li>
+										))
+									) : (
+										<p className="text-gray-500 text-sm">No trending materials yet.</p>
+									)}
+								</ul>
+							</div>
+
+						</div>
 
 					{/* Section 2: Users Management Table */}
 					<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg overflow-hidden">
@@ -162,6 +221,7 @@ const AdminDashboard = () => {
 								</tbody>
 							</table>
 						</div>
+						
 					</div>
 				</>
 			)}
