@@ -21,9 +21,11 @@ const AdminDashboard = () => {
 	const [showModal, setShowModal] = useState(false);
 	const [adminForm, setAdminForm] = useState({ name: '', email: '', password: '' });
 	// Tab State
-  const [activeTab, setActiveTab] = useState('dashboard'); // Options: 'dashboard', 'users', 'approvals'
-  // State for Pending Materials
-  const [pendingMaterials, setPendingMaterials] = useState([]);
+	const [activeTab, setActiveTab] = useState('dashboard'); // Options: 'dashboard', 'users', 'approvals'
+	// State for Pending Materials
+	const [pendingMaterials, setPendingMaterials] = useState([]);
+	// State for Support Tickets
+	const [supportTickets, setSupportTickets] = useState([]);
 
 	// --- API Header Helper ---
 	const getAuthHeader = () => {
@@ -39,6 +41,7 @@ const AdminDashboard = () => {
 		} else {
 			fetchDashboardData();
 			fetchPendingMaterials();
+			fetchSupportTickets();
 		}
 	}, []);
 
@@ -144,7 +147,36 @@ const AdminDashboard = () => {
 			alert("Failed to delete material.");
 		}
 	};
-	
+
+	// Fetch Support Tickets
+	const fetchSupportTickets = async () => {
+		try {
+			const res = await axios.get('http://localhost:8080/api/admin/support', getAuthHeader());
+			setSupportTickets(res.data);
+		} catch (err) {
+			console.error("Error fetching tickets:", err);
+		}
+	};
+
+	// Reply to Ticket
+	const handleReplyTicket = async (ticketId) => {
+		// Using prompt for simplicity. You can use a modal for better UI later.
+		const replyMessage = window.prompt("Enter your reply for the student:");
+		if (!replyMessage) return;
+
+		try {
+			await axios.put(`http://localhost:8080/api/admin/support/${ticketId}/reply`,
+				{ replyMessage },
+				getAuthHeader()
+			);
+			alert("Reply sent successfully! 📩");
+			fetchSupportTickets(); // Refresh list
+		} catch (err) {
+			console.error(err);
+			alert("Failed to send reply.");
+		}
+	};
+
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-[#1e1e1e] p-8 transition-colors duration-300">
 
@@ -184,6 +216,12 @@ const AdminDashboard = () => {
 						<span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingMaterials.length}</span>
 					)}
 				</button>
+				<button
+					onClick={() => setActiveTab('support')}
+					className={`pb-2 px-4 font-semibold transition-colors ${activeTab === 'support' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+				>
+					Support Tickets
+				</button>
 			</div>
 
 			{error && (
@@ -196,130 +234,130 @@ const AdminDashboard = () => {
 				<div className="text-center text-blue-600 text-xl py-10">Loading Dashboard...</div>
 			) : (
 				<>
-				{ activeTab === 'dashboard' && (
-					<>
-					{/* Section 1: Stats Cards */}
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-						<StatCard title="Total Users" count={stats.totalUsers} color="bg-blue-600 dark:bg-blue-700" />
-						<StatCard title="Total Materials" count={stats.totalMaterials} color="bg-green-600 dark:bg-green-700" />
-						<StatCard title="Pending Requests" count={stats.pendingMaterials} color="bg-yellow-500 dark:bg-yellow-600" />
-						<StatCard title="Total Posts" count={stats.totalPosts} color="bg-purple-600 dark:bg-purple-700" />
-					</div>
-						{/* Analytics Section: Top Contributors & Trending Materials */}
-						<div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-
-							{/* Top Contributors Card */}
-							<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg p-6">
-								<h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">🏆 Top Contributors</h3>
-								<ul className="space-y-4">
-									{topContributors.length > 0 ? (
-										topContributors.map((user, index) => (
-											<li key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-[#333333] rounded-lg">
-												<div className="flex items-center">
-													<span className="text-lg font-bold text-yellow-500 mr-3">#{index + 1}</span>
-													<span className="text-gray-700 dark:text-gray-200 font-medium">{user.name}</span>
-												</div>
-												<span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded dark:bg-blue-200 dark:text-blue-800">
-													{user.uploadCount} Uploads
-												</span>
-											</li>
-										))
-									) : (
-										<p className="text-gray-500 text-sm">No contributors yet.</p>
-									)}
-								</ul>
+					{activeTab === 'dashboard' && (
+						<>
+							{/* Section 1: Stats Cards */}
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+								<StatCard title="Total Users" count={stats.totalUsers} color="bg-blue-600 dark:bg-blue-700" />
+								<StatCard title="Total Materials" count={stats.totalMaterials} color="bg-green-600 dark:bg-green-700" />
+								<StatCard title="Pending Requests" count={stats.pendingMaterials} color="bg-yellow-500 dark:bg-yellow-600" />
+								<StatCard title="Total Posts" count={stats.totalPosts} color="bg-purple-600 dark:bg-purple-700" />
 							</div>
+							{/* Analytics Section: Top Contributors & Trending Materials */}
+							<div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
 
-							{/* Trending Materials Card */}
-							<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg p-6">
-								<h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">🔥 Trending Materials</h3>
-								<ul className="space-y-4">
-									{trendingMaterials.length > 0 ? (
-										trendingMaterials.map((material, index) => (
-											<li key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-[#333333] rounded-lg">
-												<div>
-													<p className="text-gray-700 dark:text-gray-200 font-medium">{material.title}</p>
-													<p className="text-xs text-gray-500 dark:text-gray-400">{material.subject}</p>
-												</div>
-												<div className="flex items-center text-green-600 dark:text-green-400">
-													<span className="font-bold text-lg mr-1">{material.downloadCount}</span>
-													<span className="text-xs">Downloads</span>
-												</div>
-											</li>
-										))
-									) : (
-										<p className="text-gray-500 text-sm">No trending materials yet.</p>
-									)}
-								</ul>
+								{/* Top Contributors Card */}
+								<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg p-6">
+									<h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">🏆 Top Contributors</h3>
+									<ul className="space-y-4">
+										{topContributors.length > 0 ? (
+											topContributors.map((user, index) => (
+												<li key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-[#333333] rounded-lg">
+													<div className="flex items-center">
+														<span className="text-lg font-bold text-yellow-500 mr-3">#{index + 1}</span>
+														<span className="text-gray-700 dark:text-gray-200 font-medium">{user.name}</span>
+													</div>
+													<span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded dark:bg-blue-200 dark:text-blue-800">
+														{user.uploadCount} Uploads
+													</span>
+												</li>
+											))
+										) : (
+											<p className="text-gray-500 text-sm">No contributors yet.</p>
+										)}
+									</ul>
+								</div>
+
+								{/* Trending Materials Card */}
+								<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg p-6">
+									<h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">🔥 Trending Materials</h3>
+									<ul className="space-y-4">
+										{trendingMaterials.length > 0 ? (
+											trendingMaterials.map((material, index) => (
+												<li key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-[#333333] rounded-lg">
+													<div>
+														<p className="text-gray-700 dark:text-gray-200 font-medium">{material.title}</p>
+														<p className="text-xs text-gray-500 dark:text-gray-400">{material.subject}</p>
+													</div>
+													<div className="flex items-center text-green-600 dark:text-green-400">
+														<span className="font-bold text-lg mr-1">{material.downloadCount}</span>
+														<span className="text-xs">Downloads</span>
+													</div>
+												</li>
+											))
+										) : (
+											<p className="text-gray-500 text-sm">No trending materials yet.</p>
+										)}
+									</ul>
+								</div>
 							</div>
-						</div>
 						</>
-						)}
+					)}
 
-						{activeTab === 'users' && (
-							<>
-					{/* Section 2: Users Management Table */}
-					<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg overflow-hidden">
-						<div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-							<h2 className="text-xl font-bold text-gray-800 dark:text-white">Registered Users</h2>
-						</div>
+					{activeTab === 'users' && (
+						<>
+							{/* Section 2: Users Management Table */}
+							<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg overflow-hidden">
+								<div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+									<h2 className="text-xl font-bold text-gray-800 dark:text-white">Registered Users</h2>
+								</div>
 
-						<div className="overflow-x-auto">
-							<table className="w-full text-left border-collapse">
-								<thead>
-									<tr className="bg-gray-100 dark:bg-[#333333] text-gray-600 dark:text-gray-300 uppercase text-sm leading-normal">
-										<th className="py-3 px-6 text-left">ID</th>
-										<th className="py-3 px-6 text-left">Name</th>
-										<th className="py-3 px-6 text-left">Email</th>
-										<th className="py-3 px-6 text-center">Role</th>
-										<th className="py-3 px-6 text-center">Status</th>
-										<th className="py-3 px-6 text-center">Action</th>
-									</tr>
-								</thead>
-								<tbody className="text-gray-600 dark:text-gray-300 text-sm font-light">
-									{users.length > 0 ? (
-										users.map((user) => (
-											<tr key={user.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#2d2d2d] transition-colors">
-												<td className="py-3 px-6 text-left font-medium">{user.id}</td>
-												<td className="py-3 px-6 text-left">{user.name}</td>
-												<td className="py-3 px-6 text-left">{user.email}</td>
-												<td className="py-3 px-6 text-center">
-													<span className={`px-3 py-1 rounded-full text-xs ${user.role === 'ADMIN' ? 'bg-purple-200 text-purple-700' : 'bg-blue-200 text-blue-700'}`}>
-														{user.role}
-													</span>
-												</td>
-												<td className="py-3 px-6 text-center">
-													<span className={`px-3 py-1 rounded-full text-xs font-semibold ${user.blocked ? 'bg-red-200 text-red-700' : 'bg-green-200 text-green-700'}`}>
-														{user.blocked ? 'Blocked' : 'Active'}
-													</span>
-												</td>
-												<td className="py-3 px-6 text-center">
-													{user.role !== 'ADMIN' && (
-														<button
-															onClick={() => handleToggleBlock(user.id)}
-															className={`py-1 px-3 rounded text-xs font-bold text-white transition duration-300 ${user.blocked
-																	? 'bg-green-500 hover:bg-green-600'
-																	: 'bg-red-500 hover:bg-red-600'
-																}`}
-														>
-															{user.blocked ? 'Unblock' : 'Block'}
-														</button>
-													)}
-												</td>
+								<div className="overflow-x-auto">
+									<table className="w-full text-left border-collapse">
+										<thead>
+											<tr className="bg-gray-100 dark:bg-[#333333] text-gray-600 dark:text-gray-300 uppercase text-sm leading-normal">
+												<th className="py-3 px-6 text-left">ID</th>
+												<th className="py-3 px-6 text-left">Name</th>
+												<th className="py-3 px-6 text-left">Email</th>
+												<th className="py-3 px-6 text-center">Role</th>
+												<th className="py-3 px-6 text-center">Status</th>
+												<th className="py-3 px-6 text-center">Action</th>
 											</tr>
-										))
-									) : (
-										<tr>
-											<td colSpan="6" className="text-center py-6">No users found.</td>
-										</tr>
-									)}
-								</tbody>
-							</table>
-						</div>
-						
-					</div>
-							</>
-						)}
+										</thead>
+										<tbody className="text-gray-600 dark:text-gray-300 text-sm font-light">
+											{users.length > 0 ? (
+												users.map((user) => (
+													<tr key={user.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#2d2d2d] transition-colors">
+														<td className="py-3 px-6 text-left font-medium">{user.id}</td>
+														<td className="py-3 px-6 text-left">{user.name}</td>
+														<td className="py-3 px-6 text-left">{user.email}</td>
+														<td className="py-3 px-6 text-center">
+															<span className={`px-3 py-1 rounded-full text-xs ${user.role === 'ADMIN' ? 'bg-purple-200 text-purple-700' : 'bg-blue-200 text-blue-700'}`}>
+																{user.role}
+															</span>
+														</td>
+														<td className="py-3 px-6 text-center">
+															<span className={`px-3 py-1 rounded-full text-xs font-semibold ${user.blocked ? 'bg-red-200 text-red-700' : 'bg-green-200 text-green-700'}`}>
+																{user.blocked ? 'Blocked' : 'Active'}
+															</span>
+														</td>
+														<td className="py-3 px-6 text-center">
+															{user.role !== 'ADMIN' && (
+																<button
+																	onClick={() => handleToggleBlock(user.id)}
+																	className={`py-1 px-3 rounded text-xs font-bold text-white transition duration-300 ${user.blocked
+																		? 'bg-green-500 hover:bg-green-600'
+																		: 'bg-red-500 hover:bg-red-600'
+																		}`}
+																>
+																	{user.blocked ? 'Unblock' : 'Block'}
+																</button>
+															)}
+														</td>
+													</tr>
+												))
+											) : (
+												<tr>
+													<td colSpan="6" className="text-center py-6">No users found.</td>
+												</tr>
+											)}
+										</tbody>
+									</table>
+								</div>
+
+							</div>
+						</>
+					)}
 				</>
 			)}
 			{activeTab === 'approvals' && (
@@ -378,7 +416,72 @@ const AdminDashboard = () => {
 					</div>
 				</div>
 			)}
-			
+
+			{activeTab === 'support' && (
+				<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg overflow-hidden">
+					<div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+						<h2 className="text-xl font-bold text-gray-800 dark:text-white">Student Support Tickets</h2>
+					</div>
+					<div className="overflow-x-auto">
+						<table className="w-full text-left border-collapse">
+							<thead>
+								<tr className="bg-gray-100 dark:bg-[#333333] text-gray-600 dark:text-gray-300 uppercase text-sm">
+									<th className="py-3 px-6">ID</th>
+									<th className="py-3 px-6">User</th>
+									<th className="py-3 px-6">Subject</th>
+									<th className="py-3 px-6">Status</th>
+									<th className="py-3 px-6">Date</th>
+									<th className="py-3 px-6 text-center">Action</th>
+								</tr>
+							</thead>
+							<tbody className="text-gray-600 dark:text-gray-300 text-sm">
+								{supportTickets.length > 0 ? (
+									supportTickets.map((ticket) => (
+										<tr key={ticket.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#2d2d2d]">
+											<td className="py-3 px-6">#{ticket.id}</td>
+											<td className="py-3 px-6">
+												<div className="flex flex-col">
+													<span className="font-semibold">{ticket.userName}</span>
+													<span className="text-xs text-gray-400">{ticket.userEmail}</span>
+												</div>
+											</td>
+											<td className="py-3 px-6">
+												<div className="max-w-xs">
+													<p className="font-medium text-gray-800 dark:text-gray-200">{ticket.subject}</p>
+													<p className="text-xs truncate" title={ticket.message}>{ticket.message}</p>
+												</div>
+											</td>
+											<td className="py-3 px-6">
+												<span className={`px-2 py-1 rounded text-xs font-bold ${ticket.status === 'RESOLVED' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+													{ticket.status}
+												</span>
+											</td>
+											<td className="py-3 px-6">{new Date(ticket.createdAt).toLocaleDateString()}</td>
+											<td className="py-3 px-6 text-center">
+												{ticket.status !== 'RESOLVED' ? (
+													<button
+														onClick={() => handleReplyTicket(ticket.id)}
+														className="bg-blue-600 text-white hover:bg-blue-700 py-1 px-3 rounded text-xs font-bold transition"
+													>
+														Reply
+													</button>
+												) : (
+													<span className="text-green-500 font-bold text-xs">✔ Solved</span>
+												)}
+											</td>
+										</tr>
+									))
+								) : (
+									<tr>
+										<td colSpan="6" className="text-center py-6">No support tickets found.</td>
+									</tr>
+								)}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			)}
+
 			{/* Create Admin Modal */}
 			{showModal && (
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
