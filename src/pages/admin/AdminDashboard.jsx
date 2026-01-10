@@ -20,6 +20,10 @@ const AdminDashboard = () => {
 	const [trendingMaterials, setTrendingMaterials] = useState([]);
 	const [showModal, setShowModal] = useState(false);
 	const [adminForm, setAdminForm] = useState({ name: '', email: '', password: '' });
+	// Tab State
+  const [activeTab, setActiveTab] = useState('dashboard'); // Options: 'dashboard', 'users', 'approvals'
+  // State for Pending Materials
+  const [pendingMaterials, setPendingMaterials] = useState([]);
 
 	// --- API Header Helper ---
 	const getAuthHeader = () => {
@@ -34,6 +38,7 @@ const AdminDashboard = () => {
 			navigate('/login');
 		} else {
 			fetchDashboardData();
+			fetchPendingMaterials();
 		}
 	}, []);
 
@@ -103,6 +108,43 @@ const AdminDashboard = () => {
 			alert("Failed to create Admin. Email might already exist.");
 		}
 	};
+	// Fetch Pending Materials
+	const fetchPendingMaterials = async () => {
+		try {
+			const res = await axios.get('http://localhost:8080/api/materials/pending', getAuthHeader());
+			setPendingMaterials(res.data);
+		} catch (err) {
+			console.error("Error fetching pending materials:", err);
+		}
+	};
+
+	// Approve Material
+	const handleApproveMaterial = async (materialId) => {
+		if (!window.confirm("Approve this material?")) return;
+		try {
+			await axios.put(`http://localhost:8080/api/materials/${materialId}/approve`, {}, getAuthHeader());
+			alert("Material Approved!");
+			fetchPendingMaterials(); // Refresh list
+			fetchDashboardData(); // Refresh stats
+		} catch (err) {
+			console.error(err);
+			alert("Failed to approve material.");
+		}
+	};
+
+	// Reject (Delete) Material
+	const handleRejectMaterial = async (materialId) => {
+		if (!window.confirm("Reject and Delete this material? This cannot be undone.")) return;
+		try {
+			await axios.delete(`http://localhost:8080/api/materials/${materialId}`, getAuthHeader());
+			alert("Material Rejected/Deleted.");
+			fetchPendingMaterials(); // Refresh list
+		} catch (err) {
+			console.error(err);
+			alert("Failed to delete material.");
+		}
+	};
+	
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-[#1e1e1e] p-8 transition-colors duration-300">
 
@@ -119,6 +161,30 @@ const AdminDashboard = () => {
 					<span className="mr-2">➕</span> Create New Admin
 				</button>
 			</div>
+			{/* Tab Navigation */}
+			<div className="flex space-x-4 mb-6 border-b border-gray-200 dark:border-gray-700 pb-2">
+				<button
+					onClick={() => setActiveTab('dashboard')}
+					className={`pb-2 px-4 font-semibold transition-colors ${activeTab === 'dashboard' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+				>
+					Overview
+				</button>
+				<button
+					onClick={() => setActiveTab('users')}
+					className={`pb-2 px-4 font-semibold transition-colors ${activeTab === 'users' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+				>
+					Users Management
+				</button>
+				<button
+					onClick={() => setActiveTab('approvals')}
+					className={`pb-2 px-4 font-semibold transition-colors ${activeTab === 'approvals' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+				>
+					Pending Approvals
+					{pendingMaterials.length > 0 && (
+						<span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingMaterials.length}</span>
+					)}
+				</button>
+			</div>
 
 			{error && (
 				<div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
@@ -130,6 +196,8 @@ const AdminDashboard = () => {
 				<div className="text-center text-blue-600 text-xl py-10">Loading Dashboard...</div>
 			) : (
 				<>
+				{ activeTab === 'dashboard' && (
+					<>
 					{/* Section 1: Stats Cards */}
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
 						<StatCard title="Total Users" count={stats.totalUsers} color="bg-blue-600 dark:bg-blue-700" />
@@ -137,7 +205,6 @@ const AdminDashboard = () => {
 						<StatCard title="Pending Requests" count={stats.pendingMaterials} color="bg-yellow-500 dark:bg-yellow-600" />
 						<StatCard title="Total Posts" count={stats.totalPosts} color="bg-purple-600 dark:bg-purple-700" />
 					</div>
-
 						{/* Analytics Section: Top Contributors & Trending Materials */}
 						<div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
 
@@ -185,9 +252,12 @@ const AdminDashboard = () => {
 									)}
 								</ul>
 							</div>
-
 						</div>
+						</>
+						)}
 
+						{activeTab === 'users' && (
+							<>
 					{/* Section 2: Users Management Table */}
 					<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg overflow-hidden">
 						<div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -248,8 +318,67 @@ const AdminDashboard = () => {
 						</div>
 						
 					</div>
+							</>
+						)}
 				</>
 			)}
+			{activeTab === 'approvals' && (
+				<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg overflow-hidden">
+					<div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+						<h2 className="text-xl font-bold text-gray-800 dark:text-white">Pending Material Requests</h2>
+					</div>
+					<div className="overflow-x-auto">
+						<table className="w-full text-left border-collapse">
+							<thead>
+								<tr className="bg-gray-100 dark:bg-[#333333] text-gray-600 dark:text-gray-300 uppercase text-sm">
+									<th className="py-3 px-6">Title</th>
+									<th className="py-3 px-6">Subject</th>
+									<th className="py-3 px-6">Uploaded By</th>
+									<th className="py-3 px-6">Date</th>
+									<th className="py-3 px-6 text-center">Actions</th>
+								</tr>
+							</thead>
+							<tbody className="text-gray-600 dark:text-gray-300 text-sm">
+								{pendingMaterials.length > 0 ? (
+									pendingMaterials.map((material) => (
+										<tr key={material.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#2d2d2d]">
+											<td className="py-3 px-6 font-medium">
+												<a href={material.fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+													{material.title}
+												</a>
+											</td>
+											<td className="py-3 px-6">{material.subject}</td>
+											<td className="py-3 px-6">{material.uploadedBy}</td>
+											<td className="py-3 px-6">{new Date(material.uploadDate || Date.now()).toLocaleDateString()}</td>
+											<td className="py-3 px-6 text-center">
+												<div className="flex justify-center item-center space-x-2">
+													<button
+														onClick={() => handleApproveMaterial(material.id)}
+														className="bg-green-100 text-green-600 hover:bg-green-200 py-1 px-3 rounded text-xs font-bold transition"
+													>
+														Approve
+													</button>
+													<button
+														onClick={() => handleRejectMaterial(material.id)}
+														className="bg-red-100 text-red-600 hover:bg-red-200 py-1 px-3 rounded text-xs font-bold transition"
+													>
+														Reject
+													</button>
+												</div>
+											</td>
+										</tr>
+									))
+								) : (
+									<tr>
+										<td colSpan="5" className="text-center py-6">No pending approvals.</td>
+									</tr>
+								)}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			)}
+			
 			{/* Create Admin Modal */}
 			{showModal && (
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
