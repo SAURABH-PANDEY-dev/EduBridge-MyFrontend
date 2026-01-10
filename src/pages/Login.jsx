@@ -30,12 +30,12 @@ const Login = ({ setIsLoggedIn }) => {
 			});
 
 			// Response Handling
-			console.log("Login Response:", response.data);
+			// console.log("Login Response:", response.data);
 			const token = response.data.token || response.data;
 
 			localStorage.setItem("token", token);
 			const decoded = jwtDecode(token);
-			console.log("Decoded Token Data:", decoded); 
+			// console.log("Decoded Token Data:", decoded); 
 			setIsLoggedIn(true);
 			alert("Login Successful!");
 			if (decoded.role === "ADMIN" || decoded.authorities === "ADMIN") {
