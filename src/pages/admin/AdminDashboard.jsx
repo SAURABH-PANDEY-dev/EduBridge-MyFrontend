@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 const AdminDashboard = () => {
 	const navigate = useNavigate();
 
-	// State to store stats
+	// --- States ---
 	const [stats, setStats] = useState({
 		totalUsers: 0,
 		totalMaterials: 0,
@@ -13,41 +13,64 @@ const AdminDashboard = () => {
 		totalPosts: 0
 	});
 
+	const [users, setUsers] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 
-	// API Call on Component Mount
+	// --- API Header Helper ---
+	const getAuthHeader = () => {
+		const token = localStorage.getItem("token");
+		return { headers: { Authorization: `Bearer ${token}` } };
+	};
+
+	// --- Effects ---
 	useEffect(() => {
-		fetchStats();
+		const token = localStorage.getItem("token");
+		if (!token) {
+			navigate('/login');
+		} else {
+			fetchDashboardData();
+		}
 	}, []);
 
-	const fetchStats = async () => {
+	// --- API Calls ---
+	const fetchDashboardData = async () => {
 		try {
-			const token = localStorage.getItem("token");
+			setLoading(true);
+			// 1. Fetch Stats
+			const statsRes = await axios.get('http://localhost:8080/api/admin/stats', getAuthHeader());
+			setStats(statsRes.data);
 
-			// Agar token nahi hai, to login pe bhejo
-			if (!token) {
-				navigate('/login');
-				return;
-			}
+			// 2. Fetch Users List
+			const usersRes = await axios.get('http://localhost:8080/api/admin/users', getAuthHeader());
+			// console.log("Users Data from Backend:", usersRes.data);
+			setUsers(usersRes.data);
 
-			const response = await axios.get('http://localhost:8080/api/admin/stats', {
-				headers: {
-					Authorization: `Bearer ${token}` // 👈 Header mein Token bhejna zaroori hai
-				}
-			});
-
-			setStats(response.data); // Data state mein set kiya
 			setLoading(false);
-
 		} catch (err) {
-			console.error("Error fetching stats:", err);
-			setError("Failed to load dashboard data. Are you an Admin?");
+			console.error("Error fetching data:", err);
+			setError("Failed to load dashboard data.");
 			setLoading(false);
 		}
 	};
 
-	// Stats Card Component (Design reuse ke liye)
+	const handleToggleBlock = async (userId) => {
+		if (!window.confirm("Are you sure you want to change this user's status?")) return;
+
+		try {
+			await axios.put(`http://localhost:8080/api/admin/users/${userId}/toggle-block`, {}, getAuthHeader());
+			setUsers(users.map(user =>
+				user.id === userId ? { ...user, blocked: !user.blocked } : user
+			));
+
+			alert("User status updated!");
+		} catch (err) {
+			console.error("Error updating user:", err);
+			alert("Failed to update user status.");
+		}
+	};
+
+	// --- Components ---
 	const StatCard = ({ title, count, color }) => (
 		<div className={`p-6 rounded-lg shadow-md text-white ${color} transition-transform hover:scale-105`}>
 			<h3 className="text-lg font-semibold opacity-90">{title}</h3>
@@ -58,36 +81,90 @@ const AdminDashboard = () => {
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-[#1e1e1e] p-8 transition-colors duration-300">
 
-			{/* Header */}
 			<div className="mb-8">
 				<h1 className="text-3xl font-bold text-gray-800 dark:text-white">Admin Dashboard</h1>
-				<p className="text-gray-600 dark:text-gray-400">Welcome back, Admin</p>
+				<p className="text-gray-600 dark:text-gray-400">Manage your portal efficiently.</p>
 			</div>
 
-			{/* Error Message */}
 			{error && (
 				<div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
 					{error}
 				</div>
 			)}
 
-			{/* Loading Spinner */}
 			{loading ? (
-				<div className="text-center text-blue-600 dark:text-blue-400 text-xl">Loading stats...</div>
+				<div className="text-center text-blue-600 text-xl py-10">Loading Dashboard...</div>
 			) : (
-				/* Stats Grid */
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-					<StatCard title="Total Users" count={stats.totalUsers} color="bg-blue-600 dark:bg-blue-700" />
-					<StatCard title="Total Materials" count={stats.totalMaterials} color="bg-green-600 dark:bg-green-700" />
-					<StatCard title="Pending Requests" count={stats.pendingMaterials} color="bg-yellow-500 dark:bg-yellow-600" />
-					<StatCard title="Total Posts" count={stats.totalPosts} color="bg-purple-600 dark:bg-purple-700" />
-				</div>
-			)}
+				<>
+					{/* Section 1: Stats Cards */}
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+						<StatCard title="Total Users" count={stats.totalUsers} color="bg-blue-600 dark:bg-blue-700" />
+						<StatCard title="Total Materials" count={stats.totalMaterials} color="bg-green-600 dark:bg-green-700" />
+						<StatCard title="Pending Requests" count={stats.pendingMaterials} color="bg-yellow-500 dark:bg-yellow-600" />
+						<StatCard title="Total Posts" count={stats.totalPosts} color="bg-purple-600 dark:bg-purple-700" />
+					</div>
 
-			{/* Placeholder for future sections */}
-			<div className="mt-12 text-center text-gray-500 dark:text-gray-500">
-				More admin modules (Users, Approvals) coming soon...
-			</div>
+					{/* Section 2: Users Management Table */}
+					<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg overflow-hidden">
+						<div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+							<h2 className="text-xl font-bold text-gray-800 dark:text-white">Registered Users</h2>
+						</div>
+
+						<div className="overflow-x-auto">
+							<table className="w-full text-left border-collapse">
+								<thead>
+									<tr className="bg-gray-100 dark:bg-[#333333] text-gray-600 dark:text-gray-300 uppercase text-sm leading-normal">
+										<th className="py-3 px-6 text-left">ID</th>
+										<th className="py-3 px-6 text-left">Name</th>
+										<th className="py-3 px-6 text-left">Email</th>
+										<th className="py-3 px-6 text-center">Role</th>
+										<th className="py-3 px-6 text-center">Status</th>
+										<th className="py-3 px-6 text-center">Action</th>
+									</tr>
+								</thead>
+								<tbody className="text-gray-600 dark:text-gray-300 text-sm font-light">
+									{users.length > 0 ? (
+										users.map((user) => (
+											<tr key={user.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#2d2d2d] transition-colors">
+												<td className="py-3 px-6 text-left font-medium">{user.id}</td>
+												<td className="py-3 px-6 text-left">{user.name}</td>
+												<td className="py-3 px-6 text-left">{user.email}</td>
+												<td className="py-3 px-6 text-center">
+													<span className={`px-3 py-1 rounded-full text-xs ${user.role === 'ADMIN' ? 'bg-purple-200 text-purple-700' : 'bg-blue-200 text-blue-700'}`}>
+														{user.role}
+													</span>
+												</td>
+												<td className="py-3 px-6 text-center">
+													<span className={`px-3 py-1 rounded-full text-xs font-semibold ${user.blocked ? 'bg-red-200 text-red-700' : 'bg-green-200 text-green-700'}`}>
+														{user.blocked ? 'Blocked' : 'Active'}
+													</span>
+												</td>
+												<td className="py-3 px-6 text-center">
+													{user.role !== 'ADMIN' && (
+														<button
+															onClick={() => handleToggleBlock(user.id)}
+															className={`py-1 px-3 rounded text-xs font-bold text-white transition duration-300 ${user.blocked
+																	? 'bg-green-500 hover:bg-green-600'
+																	: 'bg-red-500 hover:bg-red-600'
+																}`}
+														>
+															{user.blocked ? 'Unblock' : 'Block'}
+														</button>
+													)}
+												</td>
+											</tr>
+										))
+									) : (
+										<tr>
+											<td colSpan="6" className="text-center py-6">No users found.</td>
+										</tr>
+									)}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</>
+			)}
 		</div>
 	);
 };
