@@ -28,6 +28,17 @@ const AdminDashboard = () => {
 	const [supportTickets, setSupportTickets] = useState([]);
 	// State for All Approved Materials
 	const [allMaterials, setAllMaterials] = useState([]);
+	// State for Upload Material Modal
+	const [showUploadModal, setShowUploadModal] = useState(false);
+	const [uploadFile, setUploadFile] = useState(null);
+	const [uploadForm, setUploadForm] = useState({
+		title: '',
+		description: '',
+		subject: '',
+		semester: '',
+		year: '',
+		type: 'NOTE' // Default value
+	});
 
 	// --- API Header Helper ---
 	const getAuthHeader = () => {
@@ -205,6 +216,45 @@ const AdminDashboard = () => {
 		}
 	};
 
+	// Handle Material Upload
+	const handleUploadMaterial = async (e) => {
+		e.preventDefault();
+
+		if (!uploadFile) {
+			alert("Please select a file to upload.");
+			return;
+		}
+
+		const formData = new FormData();
+		formData.append('file', uploadFile);
+		formData.append('title', uploadForm.title);
+		formData.append('description', uploadForm.description);
+		formData.append('subject', uploadForm.subject);
+		formData.append('semester', uploadForm.semester);
+		formData.append('year', uploadForm.year);
+		formData.append('type', uploadForm.type);
+
+		try {
+			// Note: Admin uploads are auto-approved by backend logic
+			await axios.post('http://localhost:8080/api/materials/upload', formData, {
+				headers: {
+					...getAuthHeader().headers,
+					'Content-Type': 'multipart/form-data'
+				}
+			});
+
+			alert("Material Uploaded Successfully! 🚀");
+			setShowUploadModal(false); // Close modal
+			setUploadForm({ title: '', description: '', subject: '', semester: '', year: '', type: 'NOTE' }); // Reset form
+			setUploadFile(null);
+			fetchAllMaterials(); // Refresh list
+			fetchDashboardData(); // Refresh stats
+		} catch (err) {
+			console.error("Upload error:", err);
+			alert("Failed to upload material.");
+		}
+	};
+
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-[#1e1e1e] p-8 transition-colors duration-300">
 
@@ -257,6 +307,7 @@ const AdminDashboard = () => {
 				>
 					All Materials
 				</button>
+				
 			</div>
 
 			{error && (
@@ -523,6 +574,14 @@ const AdminDashboard = () => {
 						<h2 className="text-xl font-bold text-gray-800 dark:text-white">All Approved Materials</h2>
 						<span className="text-sm text-gray-500">Total: {allMaterials.length}</span>
 					</div>
+					<div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+						<button
+							onClick={() => setShowUploadModal(true)}
+							className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow transition-colors flex items-center text-sm font-bold"
+						>
+							☁️ Upload Material
+						</button>
+					</div>
 					<div className="overflow-x-auto">
 						<table className="w-full text-left border-collapse">
 							<thead>
@@ -626,6 +685,120 @@ const AdminDashboard = () => {
 									className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
 								>
 									Create
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			)}
+
+			{/* Upload Material Modal */}
+			{showUploadModal && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+					<div className="bg-white dark:bg-[#252526] p-6 rounded-lg shadow-2xl w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
+
+						<h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Upload New Material</h2>
+
+						<form onSubmit={handleUploadMaterial} className="space-y-4">
+
+							{/* File Input */}
+							<div>
+								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select File (PDF/Image)</label>
+								<input
+									type="file"
+									onChange={(e) => setUploadFile(e.target.files[0])}
+									className="w-full p-2 border rounded bg-gray-50 dark:bg-[#333333] dark:text-white dark:border-gray-600"
+									required
+								/>
+							</div>
+
+							{/* Title */}
+							<div>
+								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+								<input
+									type="text"
+									value={uploadForm.title}
+									onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
+									className="w-full p-2 border rounded bg-gray-50 dark:bg-[#333333] dark:text-white dark:border-gray-600"
+									placeholder="e.g. Java Chapter 1"
+									required
+								/>
+							</div>
+
+							{/* Description */}
+							<div>
+								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+								<textarea
+									value={uploadForm.description}
+									onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
+									className="w-full p-2 border rounded bg-gray-50 dark:bg-[#333333] dark:text-white dark:border-gray-600"
+									placeholder="Short description..."
+									rows="2"
+									required
+								/>
+							</div>
+
+							{/* Grid for Dropdowns */}
+							<div className="grid grid-cols-2 gap-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subject</label>
+									<input
+										type="text"
+										value={uploadForm.subject}
+										onChange={(e) => setUploadForm({ ...uploadForm, subject: e.target.value })}
+										className="w-full p-2 border rounded bg-gray-50 dark:bg-[#333333] dark:text-white dark:border-gray-600"
+										placeholder="e.g. Java"
+										required
+									/>
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+									<select
+										value={uploadForm.type}
+										onChange={(e) => setUploadForm({ ...uploadForm, type: e.target.value })}
+										className="w-full p-2 border rounded bg-gray-50 dark:bg-[#333333] dark:text-white dark:border-gray-600"
+									>
+										<option value="NOTE">Note</option>
+										<option value="PYQ">PYQ</option>
+										<option value="PROJECT">Project</option>
+									</select>
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Semester</label>
+									<input
+										type="text"
+										value={uploadForm.semester}
+										onChange={(e) => setUploadForm({ ...uploadForm, semester: e.target.value })}
+										className="w-full p-2 border rounded bg-gray-50 dark:bg-[#333333] dark:text-white dark:border-gray-600"
+										placeholder="e.g. Sem 1"
+									/>
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Year</label>
+									<input
+										type="text"
+										value={uploadForm.year}
+										onChange={(e) => setUploadForm({ ...uploadForm, year: e.target.value })}
+										className="w-full p-2 border rounded bg-gray-50 dark:bg-[#333333] dark:text-white dark:border-gray-600"
+										placeholder="e.g. 1st Year"
+									/>
+								</div>
+							</div>
+
+							{/* Action Buttons */}
+							<div className="flex justify-end gap-3 mt-6">
+								<button
+									type="button"
+									onClick={() => setShowUploadModal(false)}
+									className="px-4 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded"
+								>
+									Cancel
+								</button>
+								<button
+									type="submit"
+									className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-bold"
+								>
+									Upload
 								</button>
 							</div>
 						</form>
