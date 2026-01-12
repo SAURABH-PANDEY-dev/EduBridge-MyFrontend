@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import MaterialsTable from '../../components/MaterialsTable';
 import UploadModal from '../../components/UploadModal';
+import UnifiedMaterialSection from '../../components/UnifiedMaterialSection';
 
 const AdminDashboard = () => {
 	const navigate = useNavigate();
@@ -523,26 +524,9 @@ const AdminDashboard = () => {
 			)}
 
 			{activeTab === 'materials' && (
-				<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg overflow-hidden">
-					<div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-						<h2 className="text-xl font-bold text-gray-800 dark:text-white">All Approved Materials</h2>
-						<span className="text-sm text-gray-500">Total: {allMaterials.length}</span>
-					</div>
-
-					{/* Button Section */}
-					<div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-						<button
-							onClick={() => setShowUploadModal(true)}
-							className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow transition-colors flex items-center text-sm font-bold"
-						>
-							☁️ Upload Material
-						</button>
-					</div>
-					<MaterialsTable
-						materials={allMaterials}
-						isAdmin={true}
-						onDelete={handleDeleteApprovedMaterial}
-					/>
+				<div className="p-2">
+					{/* Admin mode mein Delete active hoga aur Upload bhi */}
+					<UnifiedMaterialSection mode="admin" />
 				</div>
 			)}
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import UploadModal from '../../components/UploadModal';
-import MaterialsTable from '../../components/MaterialsTable';
+import UnifiedMaterialSection from '../../components/UnifiedMaterialSection';
 
 
 const StudentDashboard = () => {
@@ -175,8 +175,8 @@ const StudentDashboard = () => {
 						key={tab}
 						onClick={() => setActiveTab(tab)}
 						className={`pb-3 px-1 text-sm font-bold uppercase tracking-wide transition-colors whitespace-nowrap ${activeTab === tab
-								? 'border-b-2 border-blue-600 text-blue-600'
-								: 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+							? 'border-b-2 border-blue-600 text-blue-600'
+							: 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
 							}`}
 					>
 						{tab === 'uploads' ? 'My Uploads' :
@@ -192,25 +192,7 @@ const StudentDashboard = () => {
 
 				{/*My Uploads Tab */}
 				{activeTab === 'uploads' && (
-					<div>
-						{/* Upload Button */}
-						<div className="flex justify-between items-center mb-4">
-							<h2 className="text-xl font-bold text-gray-800 dark:text-white">My Contributions</h2>
-							<button
-								onClick={() => setShowUploadModal(true)}
-								className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 font-bold flex items-center transition"
-							>
-								☁️ Upload New Note
-							</button>
-						</div>
-
-						{/* Reusable Table Component */}
-						{/* isAdmin={false} bheja hai taaki Delete ki jagah Download button dikhe */}
-						<MaterialsTable
-							materials={myUploads}
-							isAdmin={false}
-						/>
-					</div>
+					<UnifiedMaterialSection mode="student_personal" />
 				)}
 
 				{/* B. Saved Materials Tab */}
@@ -274,27 +256,15 @@ const StudentDashboard = () => {
 
 				{/* D. Browse All Materials Tab */}
 				{activeTab === 'browse' && (
-					<div>
-						<div className="mb-4">
-							<h2 className="text-xl font-bold text-gray-800 dark:text-white">All Study Materials</h2>
-							<p className="text-sm text-gray-500">Find notes from other students.</p>
-						</div>
-
-						{/* Reusing Table Component */}
-						<MaterialsTable
-							materials={allMaterials}
-							isAdmin={false}
-						/>
-					</div>
+					<UnifiedMaterialSection mode="student_browse" />
 				)}
-
 			</div>
 			<UploadModal
 				isOpen={showUploadModal}
 				onClose={() => setShowUploadModal(false)}
 				onUploadSuccess={fetchAllData}
 			/>
-		</div>
+		</div >
 	);
 };
 
