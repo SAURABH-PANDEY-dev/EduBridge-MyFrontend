@@ -193,7 +193,6 @@ const UnifiedMaterialSection = ({ mode = 'guest' }) => {
 						<tbody className="text-gray-600 dark:text-gray-300 text-sm">
 							{/* ✅ SKELETON LOADER (Fixes the shaking issue) */}
 							{loading ? (
-								// Jab loading ho, to 4 nakli rows dikhao
 								[1, 2, 3, 4].map((n) => (
 									<tr key={n} className="border-b border-gray-200 dark:border-gray-700 animate-pulse">
 										<td className="py-4 px-6">

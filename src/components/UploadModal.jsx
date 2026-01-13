@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 
 const UploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
-	// 1. State yahan move kar di gayi hai
 	const [file, setFile] = useState(null);
 	const [form, setForm] = useState({
 		title: '', description: '', subject: '', semester: '', year: '', type: 'NOTE'
@@ -16,14 +15,18 @@ const UploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
 		return { headers: { Authorization: `Bearer ${token}` } };
 	};
 
-	// 2. Upload Logic yahan move kar diya gaya hai
+	// 2. Upload Logic
 	const handleUpload = async (e) => {
 		e.preventDefault();
 		if (!file) return alert("Please select a file.");
+		const maxSize = 50 * 1024 * 1024; // 10MB
+		if (file.size > maxSize) {
+			alert("⚠️ File too large! Please upload a file smaller than 10MB.");
+			return;
+		}
 
 		const formData = new FormData();
 		formData.append('file', file);
-		// Loop karke form data append kar rahe hain
 		Object.keys(form).forEach(key => formData.append(key, form[key]));
 
 		try {
@@ -43,9 +46,13 @@ const UploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
 			onClose(); // Modal band karo
 		} catch (err) {
 			console.error(err);
-			alert("Upload Failed.");
+			if (err.response && err.response.status === 413) {
+				alert("Upload Failed: File size exceeds server limit (10MB).");
+			} else {
+				alert("Upload Failed.");
+			}
 			setLoading(false);
-		}
+		}	
 	};
 
 	return (
@@ -58,7 +65,9 @@ const UploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
 						<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select File</label>
 						<input type="file" onChange={(e) => setFile(e.target.files[0])} className="w-full p-2 border rounded dark:bg-[#333333] dark:text-white" required />
 					</div>
-
+					<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+						Max size: 50MB
+					</p>
 					<div>
 						<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
 						<input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full p-2 border rounded dark:bg-[#333333] dark:text-white" required />

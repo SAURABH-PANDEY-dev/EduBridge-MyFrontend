@@ -87,6 +87,39 @@ const StudentDashboard = () => {
 			alert("Failed to update profile.");
 		}
 	};
+	// --- Photo Upload Handler (Updated per API Docs) ---
+	const handlePhotoUpload = async (e) => {
+		const file = e.target.files[0];
+		if (!file) return;
+		const maxSize = 10 * 1024 * 1024;
+		if (file.size > maxSize) {
+			alert("⚠️ File too large! Please select an image under 10MB.");
+		}
+
+		const formData = new FormData();
+		formData.append('file', file); // API requires key 'file'
+
+		try {
+			// setLoading(true); 
+
+			// 1. Upload API call
+			await axios.post('http://localhost:8080/api/users/profile-pic', formData, {
+				headers: {
+					...getAuthHeader().headers,
+					'Content-Type': 'multipart/form-data'
+				}
+			});
+
+			alert("Profile Photo Updated! 📸");
+			fetchAllData();
+
+		} catch (err) {
+			console.error("Upload failed:", err);
+			alert("Failed to upload photo.");
+			setLoading(false); // Agar fail hua to loading band karo
+		}
+	};
+
 
 	const handleUnsave = async (materialId) => {
 		if (!window.confirm("Remove from bookmarks?")) return;
@@ -106,9 +139,55 @@ const StudentDashboard = () => {
 
 			{/* 1. Profile Section */}
 			<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg p-6 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6">
-				{/* Avatar Placeholder */}
-				<div className="w-24 h-24 rounded-full bg-blue-600 flex items-center justify-center text-white text-3xl font-bold border-4 border-blue-100 dark:border-gray-700">
-					{profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+				{/* Profile Image Section */}
+				<div className="relative group">
+
+					{/* A. Image Container */}
+					<div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-gray-700 shadow-lg overflow-hidden bg-gray-200 flex items-center justify-center">
+						{profile.profilePicUrl ? (
+							<img
+								src={profile.profilePicUrl}
+								alt="Profile"
+								className="w-full h-full object-cover"
+								onError={(e) => { e.target.style.display = 'none'; }} 
+							/>
+						) : (
+							// Fallback: Initial Letter
+							<span className="text-4xl font-bold text-gray-500">
+								{profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+							</span>
+						)}
+					</div>
+					{isEditing && (
+						<>
+							<label
+								htmlFor="profile-upload"
+								className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 shadow-md transition-transform hover:scale-110 z-10"
+								title="Change Photo"
+							>
+								{/* Camera SVG Icon */}
+								<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+								</svg>
+							</label>
+
+							{/* Hidden Input File */}
+							<input
+								id="profile-upload"
+								type="file"
+								accept="image/*"
+								onChange={handlePhotoUpload}
+								className="hidden"
+							/>
+						</>
+					)}
+					{/* C. Instruction Message (Only in Edit Mode) */}
+					{isEditing && (
+						<p className="text-xs text-gray-400 mt-3 font-medium animate-pulse">
+							Max size: 10MB (JPG/PNG)
+						</p>
+					)}
 				</div>
 
 				<div className="flex-1 text-center md:text-left w-full">
