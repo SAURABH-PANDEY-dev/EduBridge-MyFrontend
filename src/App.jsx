@@ -6,6 +6,7 @@ import Signup from './pages/Signup';
 import Login from './pages/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import StudentDashboard from './pages/student/StudentDashboard';
+import UnifiedMaterialSection from './components/UnifiedMaterialSection';
 
 // Home Component (Navbar + Hero)
 const Home = () => (
@@ -19,27 +20,27 @@ const Home = () => (
 
 function App() {
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      setIsLoggedIn(true);
-    }
-  }, []);
-
   return (
     <Router>
       <div className="min-h-screen bg-gray-50 dark:bg-[#1e1e1e] transition-colors duration-300">
-    
-        <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
-        
+
+        <Navbar />
+
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
-      
-          <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+
+          <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/student-dashboard" element={<StudentDashboard />} />
+          <Route path="/materials" element={
+            <div className="p-8 min-h-screen bg-gray-50 dark:bg-[#1e1e1e] max-w-7xl mx-auto">
+              <UnifiedMaterialSection mode="guest" />
+            </div>
+          } />
+
+          <Route path="/forum" element={<div className="text-center py-20 text-white">Forum Coming Soon...</div>} />
+          <Route path="/support" element={<div className="text-center py-20 text-white">Support Coming Soon...</div>} />
         </Routes>
       </div>
     </Router>

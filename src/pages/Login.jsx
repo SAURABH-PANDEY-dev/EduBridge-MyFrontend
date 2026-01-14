@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
 
-const Login = ({ setIsLoggedIn }) => {
+const Login = () => {
 	const navigate = useNavigate();
 	const [formData, setFormData] = useState({
 		email: '',
@@ -35,8 +35,6 @@ const Login = ({ setIsLoggedIn }) => {
 
 			localStorage.setItem("token", token);
 			const decoded = jwtDecode(token);
-			// console.log("Decoded Token Data:", decoded); 
-			setIsLoggedIn(true);
 			alert("Login Successful!");
 			if (decoded.role === "ADMIN" || decoded.authorities === "ADMIN") {
 				navigate('/admin');
