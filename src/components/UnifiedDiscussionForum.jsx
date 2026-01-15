@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllPosts, getComments, votePost } from '../api/forumApi';
+import { getAllPosts, getComments, votePost, deletePost } from '../api/forumApi';
 
 const UnifiedDiscussionForum = () => {
 	const navigate = useNavigate();
@@ -65,7 +65,20 @@ const UnifiedDiscussionForum = () => {
 			alert("Vote failed.");
 		}
 	};
+	// 🗑️ ADMIN DELETE LOGIC
+	const handleDelete = async (postId) => {
+		if (!window.confirm("⚠️ Admin Action: Delete this post permanently?")) return;
 
+		try {
+			await deletePost(postId);
+			// UI se turant gayab kar do
+			setPosts(posts.filter(p => p.id !== postId));
+			alert("Post deleted.");
+		} catch (error) {
+			console.error(error);
+			alert("Delete failed.");
+		}
+	};
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-[#121212] py-8 transition-colors duration-300">
 			<div className="max-w-4xl mx-auto px-4">
@@ -122,6 +135,17 @@ const UnifiedDiscussionForum = () => {
 									posts.map((post) => (
 										<div key={post.id} className="bg-white dark:bg-[#1e1e1e] p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
 											<h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">{post.title}</h3>
+											{/* delete post button */}
+											{user && user.role === 'ADMIN' && (
+												<button
+													onClick={() => handleDelete(post.id)}
+													className="text-red-500 hover:text-red-700 bg-red-50 dark:bg-red-900/20 p-2 rounded-lg transition shrink-0 ml-2"
+													title="Delete Post (Admin)"
+												>
+													🗑️
+												</button>
+											)}
+
 											<p className="text-gray-600 dark:text-gray-300 mb-4">{post.content}</p>
 											<div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-4">
 												<span className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
