@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import UploadModal from '../../components/UploadModal';
 import UnifiedMaterialSection from '../../components/UnifiedMaterialSection';
+import UnifiedDiscussionForum from '../../components/UnifiedDiscussionForum';
 
 
 const StudentDashboard = () => {
@@ -149,7 +150,7 @@ const StudentDashboard = () => {
 								src={profile.profilePicUrl}
 								alt="Profile"
 								className="w-full h-full object-cover"
-								onError={(e) => { e.target.style.display = 'none'; }} 
+								onError={(e) => { e.target.style.display = 'none'; }}
 							/>
 						) : (
 							// Fallback: Initial Letter
@@ -249,7 +250,7 @@ const StudentDashboard = () => {
 
 			{/* 2. Tabs Navigation */}
 			<div className="border-b border-gray-200 dark:border-gray-700 mb-6 flex gap-8 overflow-x-auto">
-				{['uploads', 'saved', 'downloads', 'browse'].map((tab) => (
+				{['uploads', 'saved', 'downloads', 'browse', 'forum'].map((tab) => (
 					<button
 						key={tab}
 						onClick={() => setActiveTab(tab)}
@@ -261,7 +262,8 @@ const StudentDashboard = () => {
 						{tab === 'uploads' ? 'My Uploads' :
 							tab === 'saved' ? 'Saved Notes' :
 								tab === 'downloads' ? 'Download History' :
-									'Browse All Materials'}
+									tab === 'browse' ? 'Browse All Materials' :
+										'Discussion Forum'}
 					</button>
 				))}
 			</div>
@@ -336,6 +338,14 @@ const StudentDashboard = () => {
 				{/* D. Browse All Materials Tab */}
 				{activeTab === 'browse' && (
 					<UnifiedMaterialSection mode="student_browse" />
+				)}
+
+				{/* E. Discussion Forum Tab */}
+				{activeTab === 'forum' && (
+					<div className="bg-white dark:bg-[#252526] rounded-xl shadow-sm p-1">
+						{/* Hum 'UnifiedDiscussionForum' ko directly use kar rahe hain */}
+						<UnifiedDiscussionForum />
+					</div>
 				)}
 			</div>
 			<UploadModal

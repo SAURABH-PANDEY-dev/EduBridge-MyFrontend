@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import MaterialsTable from '../../components/MaterialsTable';
 import UploadModal from '../../components/UploadModal';
 import UnifiedMaterialSection from '../../components/UnifiedMaterialSection';
+import UnifiedDiscussionForum from '../../components/UnifiedDiscussionForum';
 
 const AdminDashboard = () => {
 	const navigate = useNavigate();
@@ -261,6 +262,12 @@ const AdminDashboard = () => {
 					className={`pb-2 px-4 font-semibold transition-colors ${activeTab === 'materials' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
 				>
 					All Materials
+				</button> 
+				<button
+					onClick={() => setActiveTab('forum')}
+					className={`pb-2 px-4 font-semibold transition-colors ${activeTab === 'forum' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+				>
+					Discussion Forum
 				</button>
 				
 			</div>
@@ -527,6 +534,13 @@ const AdminDashboard = () => {
 				<div className="p-2">
 					{/* Admin mode mein Delete active hoga aur Upload bhi */}
 					<UnifiedMaterialSection mode="admin" />
+				</div>
+			)}
+			
+			{activeTab === 'forum' && (
+				<div className="bg-white dark:bg-[#252526] rounded-xl shadow-lg overflow-hidden min-h-[500px]">
+					{/* The component handles its own Admin logic (delete buttons) based on the token */}
+					<UnifiedDiscussionForum />
 				</div>
 			)}
 

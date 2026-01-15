@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
-
-// ✅ HELPER FUNCTION: Token ko decode karke Role nikalne ke liye
 const getUserFromToken = () => {
 	const token = localStorage.getItem('token');
 	if (!token) return null;
 
 	try {
-		// Token ke 3 parts hote hain, humein beech wala (Payload) chahiye
 		const base64Url = token.split('.')[1];
 		const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
 		const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
@@ -15,8 +12,6 @@ const getUserFromToken = () => {
 		}).join(''));
 
 		const decodedValue = JSON.parse(jsonPayload);
-
-		// Role 'role', 'roles' ya 'authority' kisi bhi naam se aa sakta hai
 		const rawRole = decodedValue.role || decodedValue.roles || decodedValue.authority || "STUDENT";
 
 		return {

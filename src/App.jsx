@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import StudentDashboard from './pages/student/StudentDashboard';
 import UnifiedMaterialSection from './components/UnifiedMaterialSection';
+import UnifiedDiscussionForum from './components/UnifiedDiscussionForum';
 
 // Home Component (Navbar + Hero)
 const Home = () => (
@@ -38,9 +39,8 @@ function App() {
               <UnifiedMaterialSection mode="guest" />
             </div>
           } />
-
-          <Route path="/forum" element={<div className="text-center py-20 text-white">Forum Coming Soon...</div>} />
           <Route path="/support" element={<div className="text-center py-20 text-white">Support Coming Soon...</div>} />
+          <Route path="/forum" element={<UnifiedDiscussionForum />} />
         </Routes>
       </div>
     </Router>
