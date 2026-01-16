@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import UploadModal from './UploadModal'; // Reusing your existing modal
+import UploadModal from './UploadModal';
+import ReviewModal from './ReviewModal';
 
 // Props:
 // mode: 'guest' (Home Page - View Only, No Upload)
@@ -13,6 +14,8 @@ const UnifiedMaterialSection = ({ mode = 'guest' }) => {
 	const [materials, setMaterials] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [showUploadModal, setShowUploadModal] = useState(false);
+	const [showReviewModal, setShowReviewModal] = useState(false);
+	const [selectedMaterialId, setSelectedMaterialId] = useState(null);
 
 	// Search/Filter States
 	const [query, setQuery] = useState('');
@@ -92,6 +95,16 @@ const UnifiedMaterialSection = ({ mode = 'guest' }) => {
 		} catch (err) {
 			alert("Failed to delete.");
 		}
+	};
+	const handleRateClick = (materialId) => {
+		// Agar guest hai to alert dikhao
+		if (mode === 'guest') {
+			alert("Please login to add rating/reviews and to access more features.");
+			return;
+		}
+		// Agar logged-in hai to modal kholo
+		setSelectedMaterialId(materialId);
+		setShowReviewModal(true);
 	};
 
 	// --- 3. UI Helper Variables ---
@@ -232,6 +245,16 @@ const UnifiedMaterialSection = ({ mode = 'guest' }) => {
 												<a href={m.fileUrl} target="_blank" rel="noopener noreferrer" className="bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1 rounded text-xs font-bold transition">
 													Download
 												</a>
+												{/* 👇 3. YE RATE BUTTON ADD KARO (Download ke bagal mein) */}
+												{(mode === 'student_browse' || mode === 'guest' || mode === 'admin') && (
+													<button
+														onClick={() => handleRateClick(m.id)}
+														className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-3 py-1 rounded text-xs font-bold transition"
+													>
+														⭐ Rate
+													</button>
+												)}
+
 												{canDelete && (
 													<button onClick={() => handleDelete(m.id)} className="bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1 rounded text-xs font-bold transition">
 														Delete
@@ -256,7 +279,16 @@ const UnifiedMaterialSection = ({ mode = 'guest' }) => {
 				onClose={() => setShowUploadModal(false)}
 				onUploadSuccess={fetchData}
 			/>
-
+			// Review Modal
+			<ReviewModal
+				isOpen={showReviewModal}
+				onClose={() => setShowReviewModal(false)}
+				materialId={selectedMaterialId}
+				onSuccess={() => {
+					// Review submit hone ke baad data refresh bhi kar sakte ho
+					fetchData();
+				}}
+			/>
 		</div>
 	);
 };
