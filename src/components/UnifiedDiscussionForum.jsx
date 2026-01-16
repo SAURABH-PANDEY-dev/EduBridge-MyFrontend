@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllPosts, getComments, votePost, deletePost, createComment } from '../api/forumApi';
+import CreatePostModal from './CreatePostModal';
 
 const UnifiedDiscussionForum = () => {
 	const navigate = useNavigate();
@@ -8,6 +9,7 @@ const UnifiedDiscussionForum = () => {
 	const [posts, setPosts] = useState([]);
 	const [loading, setLoading] = useState(false); // Default false
 	const [searchTerm, setSearchTerm] = useState("");
+	const [showPostModal, setShowPostModal] = useState(false);
 
 	// Comments Logic
 	const [expandedPostId, setExpandedPostId] = useState(null);
@@ -153,7 +155,8 @@ const UnifiedDiscussionForum = () => {
 								value={searchTerm}
 								onChange={(e) => setSearchTerm(e.target.value)}
 							/>
-							<button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">
+							<button onClick={() => setShowPostModal(true)}
+								className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">
 								+ Ask Question
 							</button>
 						</div>
@@ -254,6 +257,14 @@ const UnifiedDiscussionForum = () => {
 				)}
 
 			</div>
+			{/* 👇 ADD MODAL HERE */}
+			<CreatePostModal
+				isOpen={showPostModal}
+				onClose={() => setShowPostModal(false)}
+				onSuccess={() => {
+					fetchPosts(); // Post banne ke baad list refresh hogi
+				}}
+			/>
 		</div>
 	);
 };
