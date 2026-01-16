@@ -89,3 +89,15 @@ export const getComments = async (postId) => {
 		return [];
 	}
 };
+
+// 6. Add a Comment (NEW)
+export const createComment = async (commentData) => {
+	try {
+		// commentData: { content: "...", postId: 123 }
+		const response = await axios.post(`${BASE_URL}/forum/comments`, commentData, getAuthHeaders());
+		return response.data;
+	} catch (error) {
+		console.error("Error posting comment:", error);
+		throw error;
+	}
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllPosts, getComments, votePost, deletePost } from '../api/forumApi';
+import { getAllPosts, getComments, votePost, deletePost, createComment } from '../api/forumApi';
 
 const UnifiedDiscussionForum = () => {
 	const navigate = useNavigate();
@@ -12,6 +12,9 @@ const UnifiedDiscussionForum = () => {
 	// Comments Logic
 	const [expandedPostId, setExpandedPostId] = useState(null);
 	const [activeComments, setActiveComments] = useState([]);
+	// FOR COMMENT INPUT
+	const [newComment, setNewComment] = useState("");
+	const [submitting, setSubmitting] = useState(false);
 
 	// 1. Check Auth on Load
 	useEffect(() => {
@@ -55,6 +58,33 @@ const UnifiedDiscussionForum = () => {
 		setExpandedPostId(postId);
 		const commentsData = await getComments(postId);
 		setActiveComments(commentsData);
+	};
+	// Handle Comment Submit
+	const handlePostComment = async (postId) => {
+		if (!newComment.trim()) return; // Empty comment mat bhejo
+		setSubmitting(true);
+
+		try {
+			// 1. API Call
+			await createComment({ content: newComment, postId: postId });
+
+			// 2. Refresh Comments
+			const updatedComments = await getComments(postId);
+			setActiveComments(updatedComments);
+
+			// 3. Clear Input
+			setNewComment("");
+
+			// Optional: Update post comment count locally (User experience ke liye)
+			setPosts(posts.map(p =>
+				p.id === postId ? { ...p, commentCount: (p.commentCount || 0) + 1 } : p
+			));
+
+		} catch (error) {
+			alert("Failed to post comment.");
+		} finally {
+			setSubmitting(false);
+		}
 	};
 
 	const handleVote = async (postId) => {
@@ -170,6 +200,25 @@ const UnifiedDiscussionForum = () => {
 													<h4 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3 border-b dark:border-gray-600 pb-2">
 														Discussion ({activeComments.length})
 													</h4>
+
+													{/* COMMENT INPUT BOX */}
+													<div className="flex gap-2 mb-4">
+														<input
+															type="text"
+															placeholder="Write a reply..."
+															className="flex-1 p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-[#333] text-sm outline-none focus:ring-1 focus:ring-blue-500 text-gray-800 dark:text-white"
+															value={newComment}
+															onChange={(e) => setNewComment(e.target.value)}
+															onKeyDown={(e) => e.key === 'Enter' && handlePostComment(post.id)} // Enter dabane pe send
+														/>
+														<button
+															onClick={() => handlePostComment(post.id)}
+															disabled={submitting || !newComment.trim()}
+															className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg text-xs font-bold transition"
+														>
+															{submitting ? "..." : "Reply"}
+														</button>
+													</div>
 
 													{activeComments.length > 0 ? (
 														<div className="space-y-3">
