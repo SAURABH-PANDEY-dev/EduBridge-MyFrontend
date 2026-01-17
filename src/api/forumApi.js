@@ -101,3 +101,18 @@ export const createComment = async (commentData) => {
 		throw error;
 	}
 }
+
+// 7. Mark Comment as Best Answer
+export const markCommentAsAnswer = async (postId, commentId) => {
+	try {
+		const response = await axios.put(
+			`${BASE_URL}/forum/posts/${postId}/comments/${commentId}/accept`,
+			{}, // Empty body
+			getAuthHeaders()
+		);
+		return response.data;
+	} catch (error) {
+		console.error("Error marking answer:", error);
+		throw error;
+	}
+};

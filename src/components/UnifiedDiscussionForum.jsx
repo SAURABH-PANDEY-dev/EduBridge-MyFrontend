@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllPosts, getComments, votePost, deletePost, createComment } from '../api/forumApi';
+import { getAllPosts, getComments, votePost, deletePost, createComment, markCommentAsAnswer } from '../api/forumApi';
 import CreatePostModal from './CreatePostModal';
 
 const UnifiedDiscussionForum = () => {
@@ -109,6 +109,24 @@ const UnifiedDiscussionForum = () => {
 		} catch (error) {
 			console.error(error);
 			alert("Delete failed.");
+		}
+	};
+	// Handle Mark as Answer
+	const handleMarkAsAnswer = async (postId, commentId) => {
+		if (!window.confirm("Mark this as the correct answer?")) return;
+
+		try {
+			await markCommentAsAnswer(postId, commentId);
+
+			// UI Update: Local state mein us comment ko 'accepted' true kar do
+			setActiveComments(activeComments.map(c =>
+				c.id === commentId ? { ...c, isAccepted: true } : { ...c, isAccepted: false } // Baaki sab false, ye true
+			));
+
+			alert("Answer marked successfully! ✅");
+		} catch (error) {
+			console.error(error);
+			alert("Failed to mark answer.");
 		}
 	};
 	return (
@@ -223,26 +241,65 @@ const UnifiedDiscussionForum = () => {
 														</button>
 													</div>
 
+													{/* Comments List */}
 													{activeComments.length > 0 ? (
 														<div className="space-y-3">
-															{activeComments.map(c => (
-																<div key={c.id} className="border-b border-gray-200 dark:border-gray-700 pb-2 last:border-0">
-																	<div className="flex justify-between items-center mb-1">
-																		{/* ✅ Name Color Fixed */}
-																		<span className="text-xs font-bold text-blue-600 dark:text-blue-400">
-																			{c.userName || "User"}
-																		</span>
-																		{/* ✅ Date Color Fixed */}
-																		<span className="text-xs text-gray-400">
-																			{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ""}
-																		</span>
+															{activeComments.map(c => {
+																// 👇 LOGIC: Check karo ki User Admin hai ya Post ka Owner hai
+																const isOwner = user && user.name === post.userName; // Post Owner check
+																const isAdmin = user && user.role === 'ADMIN';       // Admin check
+																const canMarkAnswer = isOwner || isAdmin;
+
+																return (
+																	<div
+																		key={c.id}
+																		className={`border-b border-gray-200 dark:border-gray-700 pb-3 last:border-0 p-3 rounded-lg transition
+                        ${c.isAccepted ? "bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800" : ""}
+                    `}
+																	>
+																		<div className="flex justify-between items-start">
+
+																			{/* Comment Content */}
+																			<div className="flex-1">
+																				<div className="flex justify-between items-center mb-1">
+																					<span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+																						{c.userName || "User"}
+																						{c.isAccepted && <span className="ml-2 text-green-600 font-bold text-xs">✅ BEST ANSWER</span>}
+																					</span>
+																					<span className="text-xs text-gray-400">
+																						{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ""}
+																					</span>
+																				</div>
+																				<p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
+																					{c.content}
+																				</p>
+																			</div>
+
+																			{/* 👇 ACTION BUTTON (Sirf agar Post Owner/Admin ho aur Answer abhi tak accepted na ho) */}
+																			{canMarkAnswer && !c.isAccepted && (
+																				<button
+																					onClick={() => handleMarkAsAnswer(post.id, c.id)}
+																					className="ml-3 text-gray-400 hover:text-green-600 transition"
+																					title="Mark as Correct Answer"
+																				>
+																					<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+																						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+																					</svg>
+																				</button>
+																			)}
+
+																			{/* Agar already accepted hai to Green Tick dikhao */}
+																			{c.isAccepted && (
+																				<div className="ml-3 text-green-500" title="Accepted Answer">
+																					<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+																						<path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+																					</svg>
+																				</div>
+																			)}
+																		</div>
 																	</div>
-																	{/* ✅ Content Color Fixed */}
-																	<p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
-																		{c.content}
-																	</p>
-																</div>
-															))}
+																);
+															})}
 														</div>
 													) : (
 														<p className="text-sm text-gray-500 dark:text-gray-400 italic">No comments yet.</p>
