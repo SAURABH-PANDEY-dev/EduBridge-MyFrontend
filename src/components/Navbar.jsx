@@ -82,6 +82,9 @@ const Navbar = () => {
 						<NavLink to="/" className={getLinkClass}>
 							Home
 						</NavLink>
+						<NavLink to="/support" className={getLinkClass}>
+							Support
+						</NavLink>
 
 						{/* 👇 LOGIC: Guest vs User */}
 						{!user ? (
@@ -104,6 +107,7 @@ const Navbar = () => {
 							>
 								Dashboard
 							</NavLink>
+							
 						)}
 					</div>
 
