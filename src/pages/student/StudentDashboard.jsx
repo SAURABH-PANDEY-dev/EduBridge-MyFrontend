@@ -26,6 +26,11 @@ const StudentDashboard = () => {
 	const [showUploadModal, setShowUploadModal] = useState(false);
 	const [allMaterials, setAllMaterials] = useState([]);
 
+	//  FORUM ACTIVITY STATES
+	const [myPosts, setMyPosts] = useState([]);
+	const [myComments, setMyComments] = useState([]);
+	const [savedPosts, setSavedPosts] = useState([]);
+
 	// --- Helper: Auth Header ---
 	const getAuthHeader = () => {
 		const token = localStorage.getItem("token");
@@ -66,6 +71,16 @@ const StudentDashboard = () => {
 			// 5. Fetch All Approved Materials (Browse Tab)
 			const allMaterialsRes = await axios.get('http://localhost:8080/api/materials');
 			setAllMaterials(allMaterialsRes.data);
+
+			// FETCH FORUM DATA
+			const myPostsRes = await axios.get('http://localhost:8080/api/users/activity/posts', getAuthHeader());
+			setMyPosts(myPostsRes.data);
+
+			const myCommentsRes = await axios.get('http://localhost:8080/api/users/activity/comments', getAuthHeader());
+			setMyComments(myCommentsRes.data);
+
+			const savedPostsRes = await axios.get('http://localhost:8080/api/users/saved-posts', getAuthHeader());
+			setSavedPosts(savedPostsRes.data);
 			setLoading(false);
 		} catch (err) {
 			console.error("Error loading dashboard:", err);
@@ -294,7 +309,7 @@ const StudentDashboard = () => {
 
 			{/* 2. Tabs Navigation */}
 			<div className="border-b border-gray-200 dark:border-gray-700 mb-6 flex gap-8 overflow-x-auto">
-				{['uploads', 'saved', 'downloads', 'browse', 'forum'].map((tab) => (
+				{['uploads', 'saved', 'downloads', 'browse', 'forum', 'activity'].map((tab) => (
 					<button
 						key={tab}
 						onClick={() => setActiveTab(tab)}
@@ -306,8 +321,9 @@ const StudentDashboard = () => {
 						{tab === 'uploads' ? 'My Uploads' :
 							tab === 'saved' ? 'Saved Notes' :
 								tab === 'downloads' ? 'Download History' :
-									tab === 'browse' ? 'Browse All Materials' :
-										'Discussion Forum'}
+									tab === 'activity' ? 'My Forum Activity' :
+										tab === 'browse' ? 'Browse All Materials' :
+											'Discussion Forum'}
 					</button>
 				))}
 			</div>
@@ -389,6 +405,85 @@ const StudentDashboard = () => {
 					<div className="bg-white dark:bg-[#252526] rounded-xl shadow-sm p-1">
 						{/* Hum 'UnifiedDiscussionForum' ko directly use kar rahe hain */}
 						<UnifiedDiscussionForum />
+					</div>
+				)}
+				{/* F. My Forum Activity Tab */}
+				{activeTab === 'activity' && (
+					<div className="space-y-8">
+
+						{/* 1. MY POSTS */}
+						<div>
+							<h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 border-l-4 border-blue-500 pl-3">
+								📝 My Questions ({myPosts.length})
+							</h3>
+							{myPosts.length > 0 ? (
+								<div className="grid gap-4">
+									{myPosts.map(post => (
+										<div key={post.id} className="bg-white dark:bg-[#252526] p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700">
+											<h4 className="font-bold text-gray-800 dark:text-white">{post.title}</h4>
+											<p className="text-sm text-gray-500 mt-1 line-clamp-1">{post.content}</p>
+											<div className="mt-2 text-xs text-gray-400 flex gap-3">
+												<span>📅 {new Date(post.creationDate).toLocaleDateString()}</span>
+												<span>👍 {post.voteCount} Votes</span>
+												<span>💬 {post.commentCount} Comments</span>
+											</div>
+										</div>
+									))}
+								</div>
+							) : <p className="text-gray-500 italic">You haven't posted any questions yet.</p>}
+						</div>
+
+						{/* 2. MY COMMENTS */}
+						<div>
+							<h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 border-l-4 border-green-500 pl-3">
+								💬 My Replies ({myComments.length})
+							</h3>
+							{myComments.length > 0 ? (
+								<div className="grid gap-4">
+									{myComments.map(comment => (
+										<div key={comment.id} className="bg-white dark:bg-[#252526] p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700">
+											<p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-1">
+												Replied on: <span className="text-blue-600">{comment.title || "Unknown Post"}</span>
+											</p>
+											<p className="text-gray-800 dark:text-white bg-gray-50 dark:bg-[#333] p-2 rounded italic text-sm">
+												"{comment.content}"
+											</p>
+											<div className="mt-2 text-xs text-gray-400">
+												<span>📅 {new Date(comment.createdAt).toLocaleDateString()}</span>
+											</div>
+										</div>
+									))}
+								</div>
+							) : <p className="text-gray-500 italic">You haven't commented on any posts yet.</p>}
+						</div>
+
+						{/* 3. SAVED POSTS */}
+						<div>
+							<h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 border-l-4 border-purple-500 pl-3">
+								🔖 Saved Discussions ({savedPosts.length})
+							</h3>
+							{savedPosts.length > 0 ? (
+								<div className="grid gap-4">
+									{savedPosts.map(post => (
+										<div key={post.id} className="bg-white dark:bg-[#252526] p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700 flex justify-between items-center">
+											<div>
+												<h4 className="font-bold text-gray-800 dark:text-white">{post.title}</h4>
+												<p className="text-xs text-gray-500 mt-1">
+													By {post.authorName || "Unknown"} • {new Date(post.createdAt).toLocaleDateString()}
+												</p>
+											</div>
+											<button
+												onClick={() => navigate('/forum')} // Future: Open specific post logic
+												className="text-blue-600 text-sm font-bold hover:underline"
+											>
+												View ↗
+											</button>
+										</div>
+									))}
+								</div>
+							) : <p className="text-gray-500 italic">No saved discussions.</p>}
+						</div>
+
 					</div>
 				)}
 			</div>
