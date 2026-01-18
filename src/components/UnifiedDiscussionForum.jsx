@@ -268,8 +268,6 @@ const UnifiedDiscussionForum = () => {
 															{activeComments.map(c => {
 																// ✅ FIX 1: Use strictly 'accepted' (based on your JSON)
 																const isAnswer = c.accepted;
-																const isOwner = user && user.name === post.userName;
-																const canMarkAnswer = !!user;
 
 																return (
 																	<div key={c.id} className={`border-b border-gray-200 dark:border-gray-700 pb-3 last:border-0 p-3 rounded-lg transition ${isAnswer ? "bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800" : ""}`}>
