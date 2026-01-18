@@ -116,3 +116,25 @@ export const markCommentAsAnswer = async (postId, commentId) => {
 		throw error;
 	}
 };
+
+// 8. Toggle Save Post (Bookmark)
+export const toggleSavePost = async (postId) => {
+	try {
+		const response = await axios.post(`http://localhost:8080/api/users/posts/${postId}/save`, {}, getAuthHeaders());
+		return response.data;
+	} catch (error) {
+		console.error("Error toggling save post:", error);
+		throw error;
+	}
+};
+
+// 9. Get Saved Posts
+export const getSavedPosts = async () => {
+	try {
+		const response = await axios.get(`http://localhost:8080/api/users/saved-posts`, getAuthHeaders());
+		return response.data; // Returns array of saved posts
+	} catch (error) {
+		console.error("Error fetching saved posts:", error);
+		return [];
+	}
+};

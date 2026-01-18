@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllPosts, getComments, votePost, deletePost, createComment, markCommentAsAnswer } from '../api/forumApi';
+import { getAllPosts, getComments, votePost, deletePost, createComment, markCommentAsAnswer, toggleSavePost, getSavedPosts } from '../api/forumApi';
 import CreatePostModal from './CreatePostModal';
 
 const UnifiedDiscussionForum = () => {
@@ -17,6 +17,7 @@ const UnifiedDiscussionForum = () => {
 	// FOR COMMENT INPUT
 	const [newComment, setNewComment] = useState("");
 	const [submitting, setSubmitting] = useState(false);
+	const [savedPostIds, setSavedPostIds] = useState(new Set());
 
 	// 1. Check Auth on Load
 	useEffect(() => {
@@ -39,6 +40,13 @@ const UnifiedDiscussionForum = () => {
 		try {
 			const data = await getAllPosts(searchTerm);
 			setPosts(data);
+			const token = localStorage.getItem('token');
+			if (token) {
+				const savedData = await getSavedPosts();
+				const ids = new Set(savedData.map(post => Number(post.id)));
+				console.log("Saved Post IDs loaded:", ids);
+				setSavedPostIds(ids);
+			}
 		} catch (err) {
 			console.error("Failed to load posts");
 		} finally {
@@ -98,6 +106,30 @@ const UnifiedDiscussionForum = () => {
 		} catch (error) {
 			console.error(error);
 			alert("Delete failed.");
+		}
+	};
+
+	//  Handle Save/Bookmark
+	const handleSavePost = async (postId) => {
+		try {
+			// Optimistic Update
+			const id = Number(postId);
+			const newSet = new Set(savedPostIds);
+
+			if (newSet.has(id)) {
+				newSet.delete(id); 
+			} else {
+				newSet.add(id);  
+			}
+			setSavedPostIds(newSet);
+
+			// API Call
+			await toggleSavePost(postId);
+
+		} catch (error) {
+			console.error(error);
+			alert("Failed to save post.");
+			fetchPosts();
 		}
 	};
 
@@ -180,6 +212,34 @@ const UnifiedDiscussionForum = () => {
 												<button onClick={() => handleVote(post.id)} className="text-blue-600 font-bold">👍 {post.voteCount || 0}</button>
 												<button onClick={() => toggleComments(post.id)} className="text-gray-500">💬 {post.commentCount || 0} Comments</button>
 											</div>
+											{/* 👇 NEW: SAVE / BOOKMARK BUTTON */}
+											<button
+												onClick={() => handleSavePost(post.id)}
+												className={`ml-auto transition flex items-center gap-1 font-semibold
+            ${savedPostIds.has(post.id)
+														? "text-purple-600 hover:text-purple-700"
+														: "text-gray-400 hover:text-purple-600"
+													}`}
+												title={savedPostIds.has(Number(post.id)) ? "Unsave Post" : "Save for later"}
+											>
+												{savedPostIds.has(post.id) ? (
+													// Filled Icon
+													<>
+														<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+															<path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+														</svg>
+														<span>Saved</span>
+													</>
+												) : (
+													// Outline Icon
+													<>
+														<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+															<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+														</svg>
+														<span>Save</span>
+													</>
+												)}
+											</button>
 
 											{expandedPostId === post.id && (
 												<div className="mt-4 bg-gray-50 dark:bg-[#2d2d2d] p-4 rounded-lg border border-gray-100 dark:border-gray-700 animate-fade-in">
@@ -208,11 +268,8 @@ const UnifiedDiscussionForum = () => {
 															{activeComments.map(c => {
 																// ✅ FIX 1: Use strictly 'accepted' (based on your JSON)
 																const isAnswer = c.accepted;
-
-																// ✅ FIX 2: Strict Owner Check (Admin removed)
-																// Backend says: Only Owner can mark answer.
 																const isOwner = user && user.name === post.userName;
-																const canMarkAnswer = isOwner;
+																const canMarkAnswer = !!user;
 
 																return (
 																	<div key={c.id} className={`border-b border-gray-200 dark:border-gray-700 pb-3 last:border-0 p-3 rounded-lg transition ${isAnswer ? "bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800" : ""}`}>
