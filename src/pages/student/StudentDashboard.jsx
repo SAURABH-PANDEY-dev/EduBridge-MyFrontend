@@ -37,15 +37,7 @@ const StudentDashboard = () => {
 		return { headers: { Authorization: `Bearer ${token}` } };
 	};
 
-	// --- Initial Fetch ---
-	useEffect(() => {
-		const token = localStorage.getItem("token");
-		if (!token) {
-			navigate('/login');
-		} else {
-			fetchAllData();
-		}
-	}, []);
+	
 
 	const fetchAllData = async () => {
 		try {
@@ -89,6 +81,34 @@ const StudentDashboard = () => {
 			setLoading(false);
 		}
 	};
+	const refreshForumActivity = async () => {
+		try {
+			const myPostsRes = await axios.get('http://localhost:8080/api/users/activity/posts', getAuthHeader());
+			setMyPosts(myPostsRes.data);
+
+			const myCommentsRes = await axios.get('http://localhost:8080/api/users/activity/comments', getAuthHeader());
+			setMyComments(myCommentsRes.data);
+
+			const savedPostsRes = await axios.get('http://localhost:8080/api/users/saved-posts', getAuthHeader());
+			setSavedPosts(savedPostsRes.data);
+
+			console.log("Forum activity refreshed! 🔄");
+		} catch (error) {
+			console.error("Failed to refresh forum activity", error);
+		}
+	};
+	// --- Initial Fetch ---
+	useEffect(() => {
+		const token = localStorage.getItem("token");
+		if (!token) {
+			navigate('/login');
+		} else {
+			fetchAllData();
+			if (activeTab === 'activity') {
+				refreshForumActivity();
+			}
+		}
+	}, [activeTab]);
 
 	// --- Handlers ---
 	const handleUpdateProfile = async (e) => {
