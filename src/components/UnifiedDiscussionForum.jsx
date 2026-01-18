@@ -44,7 +44,7 @@ const UnifiedDiscussionForum = () => {
 			if (token) {
 				const savedData = await getSavedPosts();
 				const ids = new Set(savedData.map(post => Number(post.id)));
-				console.log("Saved Post IDs loaded:", ids);
+				// console.log("Saved Post IDs loaded:", ids);
 				setSavedPostIds(ids);
 			}
 		} catch (err) {

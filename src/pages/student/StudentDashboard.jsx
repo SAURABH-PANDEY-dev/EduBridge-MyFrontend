@@ -60,10 +60,6 @@ const StudentDashboard = () => {
 			const downloadsRes = await axios.get('http://localhost:8080/api/users/activity/downloads', getAuthHeader());
 			setDownloadHistory(downloadsRes.data);
 
-			// 5. Fetch All Approved Materials (Browse Tab)
-			const allMaterialsRes = await axios.get('http://localhost:8080/api/materials');
-			setAllMaterials(allMaterialsRes.data);
-
 			// FETCH FORUM DATA
 			const myPostsRes = await axios.get('http://localhost:8080/api/users/activity/posts', getAuthHeader());
 			setMyPosts(myPostsRes.data);
@@ -92,7 +88,7 @@ const StudentDashboard = () => {
 			const savedPostsRes = await axios.get('http://localhost:8080/api/users/saved-posts', getAuthHeader());
 			setSavedPosts(savedPostsRes.data);
 
-			console.log("Forum activity refreshed! 🔄");
+			// console.log("Forum activity refreshed! 🔄");
 		} catch (error) {
 			console.error("Failed to refresh forum activity", error);
 		}
@@ -104,9 +100,12 @@ const StudentDashboard = () => {
 			navigate('/login');
 		} else {
 			fetchAllData();
-			if (activeTab === 'activity') {
-				refreshForumActivity();
-			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+	useEffect(() => {
+		if (activeTab === 'activity') {
+			refreshForumActivity();
 		}
 	}, [activeTab]);
 
